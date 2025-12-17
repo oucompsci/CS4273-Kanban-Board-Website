@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Overview</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <head>
+        {% load static %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+        <style>   
+        .logout-button {
+            padding: 6.5px 9px; 
+            font-size: medium;
+            background-color: #ff2323;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .username {
+            font-weight: bold;
+            font-style: italic;
+            color: #ffffff;
+            padding-right: 800px ;
+            font-size: larger;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #930e0e;
+            margin: 0;
+            padding: 0;
+        }
+        .account-details {
+            padding: 0px 20px;
+        }
+
+        .group-project {
+            padding: 0px 20px;
+        }
+
+        .logout-button:hover {
+            background-color: #d21d1d;
+        }    
+        .top-right {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .description {
+            font-size: small;
+            color: rgb(78, 78, 78);
+        }
+
+        .group-project h3 {
+            background-color: #585858;
+            color: white;
+            padding: 5px;
+            border-radius: 2px;
+            border: 1px solid #ddd;
+        }
+
+        .account-details h3 {
+            background-color: #585858;
+            color: white;
+            padding: 5px;
+            border-radius: 2px;
+            border: 1px solid #ddd;
+        }
+        .button1 {
+            padding: 6px 10px;
+            background-color: #292929;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .button1:hover {
+            background-color: #585858;
+        }
+
+
+        </style>
+    </head>
+    
+    {% include 'header.html' %}    
+    <div class="container">
+        <div class="account-details">
+            <h2>Account Details</h2>
+            <p><strong>Name:</strong> {{ user.name }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Group:</strong> {{ user.group_name }}</p>
+            <p><strong>Role:</strong> {{ user.roles }}</p>
+        </div>
+
+        <div class="group-project">
+            <h2>Group Progress</h2>
+
+            <div class="section">
+                <h3>To Do</h3>
+                <ul>
+                    {% for task in tasks_to_do %}
+                        <li>
+                            <strong>{{ task.title }}</strong> - {{ task.description }} ({{ task.user.username }})
+                        </li>
+                    {% empty %}
+                        <li>No ticket to do.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="section">
+                <h3>Doing</h3>
+                <ul>
+                    {% for task in tasks_doing %}
+                        <li>
+                            <strong>{{ task.title }}</strong> - {{ task.description }} ({{ task.user.username }})
+                            <p class="description"><strong>Risk Management:</strong> {{ task.risk_management }} </p>
+                        </li>
+                    {% empty %}
+                        <li>No ticket in progress.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="section">
+                <h3>Done</h3>
+                <ul>
+                    {% for task in tasks_done %}
+                        <li>
+                            <strong>{{ task.title }}</strong> - {{ task.description }} ({{ task.user.username }})
+                            <p class="description"><strong>Risk Management:</strong> {{ task.risk_management }} </p>
+                            <p class="description"><strong>Challenges:</strong> {{ task.challenges }} </p>
+                            <p class="description"><strong>Lesson Learned:</strong> {{ task.lesson_learned }}</p>
+                        </li>
+                    {% empty %}
+                        <li>No ticket completed.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <button onclick="window.print()" class="button1">Print Report</button>
+        </div>
+    </div>
+</body>
+</html>

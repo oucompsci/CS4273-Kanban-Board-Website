@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BACKLOG LIST</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <style>
+        .top-right {
+            position: absolute;
+            top: 15px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #930e0e;
+            margin: 0;
+            padding: 0;
+        }
+
+        .button1 {
+            padding: 6px 10px;
+            background-color: #292929;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button1:hover { background-color: #585858; }
+
+        .button2 {
+            padding: 8px 10px;
+            background-color: #292929;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .update-button {
+            padding: 8px 9px; 
+            background-color: #bdbdbd;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: not-allowed;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .disabled-button {
+            padding: 6px 10px;
+            background-color: #bdbdbd;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: not-allowed;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout-button { background-color: #df0202; }
+        .logout-button:hover { background-color: #ec3131; }
+
+        .username { font-weight: bold; }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .task-form { display: inline; }
+        .status-select, .assign-select { margin-right: 10px; }
+
+        h2 { color: #fff; margin: 10px; }
+        ul { list-style: none; padding: 0; }
+
+        .sprint-header {
+            background-color: #585858;
+            color: white;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-size: 1.2em;
+        }
+
+        /* === Messages styling to match Home & My Progress === */
+        .messages { margin: 10px 0 15px 0; }
+        .messages .message {
+            margin: 6px 0;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border-width: 3px;
+            border-style: solid;
+        }
+        .messages .message.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .messages .message.error   { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .messages .message.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+        .messages .message.info    { background-color: #e2e3e5; color: #383d41; border-color: #d6d8db; }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <div class="container">
+        <h2>BACKLOG LIST</h2>
+
+        <!-- Messages (same style as Home & My Progress) -->
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}
+              <p class="message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Restrict "Create New Ticket" button to Product Owner -->
+        {% if user.roles == 'Product Owner' %}
+            <a href="{% url 'task_create' %}" class="button1">Create New Ticket</a>
+        {% else %}
+            <a class="disabled-button">Create New Ticket</a>
+        {% endif %}
+
+        <ul>
+            <!-- Group tasks by sprint -->
+            {% regroup tasks by sprint as sprint_groups %}
+            {% for sprint_group in sprint_groups %}
+                <!-- Sprint header -->
+                <li class="sprint-header">Sprint: {{ sprint_group.grouper }}</li>
+                {% for task in sprint_group.list %}
+                    <li class="task-item">
+                        <div>
+                            <h3 style="width: 350px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ task.title }}
+                            </h3>
+                            <p><strong>Assigned to:</strong> {{ task.user.username }}</p>
+                            {% if task.depends_on %}
+                              <p class="description"><strong>Depends on:</strong> {{ task.depends_on.title }}</p>
+                            {% endif %}
+                            <input type="text" id="repo-link" name="repo_link" value="{{ task.description }}" style="width: 340px;">
+                        </div>
+                        <div>
+                            <form method="post" class="task-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="task_id" value="{{ task.id }}">
+
+                                <!-- Dropdown for status -->
+                                <select name="status" class="status-select">
+                                    <option value="to_do" {% if task.status == 'to_do' %}selected{% endif %}>To Do</option>
+                                    <option value="cancel" {% if task.status == 'cancel' %}selected{% endif %}>Cancel</option>
+                                </select>
+
+                                <!-- Dropdown for assigning user -->
+                                <select name="assign_user" class="assign-select">
+                                    {% for group_member in group_members %}
+                                        <option value="{{ group_member.id }}" {% if task.user.id == group_member.id %}selected{% endif %}>
+                                            {{ group_member.username }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+
+                                <!-- Conditionally enable/disable Update button -->
+                                {% if user.roles == 'SM1' and task.sprint == 'S1' or user.roles == 'SM2' and task.sprint == 'S2' or user.roles == 'SM3' and task.sprint == 'S3' or user.roles == 'SM4' and task.sprint == 'S4' %}
+                                    <button type="submit" class="button2">Update</button>
+                                {% else %}
+                                    <button type="submit" class="update-button" disabled>Update</button>
+                                {% endif %}
+                            </form>
+
+                            <!-- Enable Edit and Delete buttons only for Product Owner -->
+                            {% if user.roles == 'Product Owner' %}
+                                <a href="{% url 'task_update' task.pk %}" class="button1">Edit</a>
+                                <a href="{% url 'task_delete' task.pk %}" class="button1">Delete</a>
+                            {% else %}
+                                <a class="disabled-button">Edit</a>
+                                <a class="disabled-button">Delete</a>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

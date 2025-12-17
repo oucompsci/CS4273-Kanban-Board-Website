@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <style>
+        .login-style {
+            padding: 8px 10px; 
+            font-size:large;
+        }
+        .logincontainer {
+            width: 100%;
+            max-width: 500px;
+            margin: 200px auto;
+            background: #fff;
+            padding: 70px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #930e0e;
+            margin: 0;
+            padding: 0;
+        }
+        
+    </style>    
+</head>
+<body>
+    <div class="logincontainer">
+        <h2>Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="login-style">Login</button>
+        </form>
+        <p>Forget your password? <a href="{% url 'password_reset' %}">Forget Password</a></p>
+        <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+    </div>
+</body>
+</html>

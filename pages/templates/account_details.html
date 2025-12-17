@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Account Details</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <style>
+        .top-right {
+            position: absolute;
+            top: 15px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #930e0e;
+            margin: 0;
+            padding: 0;
+        }
+	
+        .logout-button {
+            background-color: #df0202;
+        }
+        .logout-button:hover {
+            background-color: #ec3131;
+        }
+        .username {
+            font-weight: bold;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .update-button {
+            padding: 6px 19px;
+            margin-right: 35px; 
+            margin-left: 8px; 
+            margin-top: 0px; 
+            background-color: #292929;
+            font-size:small;
+            color: rgb(255, 255, 255);
+        }
+        .update-button:hover {
+            background-color: #585858;
+        }
+        .button1 {
+            padding: 6px 10px;
+            background-color: #292929;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .button1:hover {
+            background-color: #585858;
+        }
+        .update-role-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .update-role-container p {
+            margin: 0 8px 0px 0px;
+        }
+
+        .update-role-container select {
+            margin-right: 13px; 
+            height: 25px; 
+            width: 207px;
+            margin-left: 0px; 
+
+        }
+
+        .user-list ul li {
+            padding: 0px 8px;
+            background-color: #ffffff;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 20px; 
+        }
+
+        .form-row ul {
+            padding: 0px 10px;
+
+        }
+
+        .form-row .form-group {
+            flex: 1; 
+        }
+
+        .role-description {
+            margin-top: 5px;
+            padding: 5px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            font-size: 0.8em;
+        }
+        .role-description p {
+            margin: 5px 0;
+        }
+
+        .message.success {
+            margin-bottom: 15px;
+            padding: 4px;    
+            background-color: #d4edda;
+            color: #155724;
+            border: 3px solid #c3e6cb;
+        }
+
+        /* Error message styling */
+        .message.error {
+            margin-bottom: 15px;
+            padding: 4px;    
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 3px solid #f5c6cb;
+        }
+        
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <p class="message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <h2>Home Page</h2>
+        <div class="static-info">
+            <form method="post">
+                {% csrf_token %}
+                <p><strong>Name:</strong> {{ user.name }} </p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="course-name">Course Name:</label>
+                        <input type="text" id="course-name" value="Capstone Design Project - CS4273" style="width: 260px;" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="academic-staff">Academic Staff:</label>
+                        <input type="text" id="academic-staff" value="Mansoor Abdulhak" style="width: 217px;" readonly>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="academic-email">Email:</label>
+                        <input type="email" id="academic-email" value="m.hak@ou.edu" style="width: 318px;" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="semester">Semester:</label>
+                        <input type="text" id="semester" value="{{ user.semester }}" style="width: 256px;" readonly>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="repo-link">Repo Link:</label>
+                        <input type="text" id="repo-link" name="repo_link" value="{{ user.repo_link }}" style="width: 286px;">
+                    </div>
+                    <div class="update-role-container">
+                        <p>Role:</p>
+                        {{ form.roles }}
+                        <button type="submit" class="update-button">Update</button>
+                    </div>    
+                </div>
+            </form>
+        </div>
+                <div class="role-description">
+                    <h3>Role Descriptions:</h3>
+                    <div class="form-row">
+                        <p><strong>Product Owner:</strong></p>
+                        <ul>
+                            <li>Communicate with Mentor/Client</li>
+                            <li>Create and assign tickets to different sprints</li>
+                        </ul>
+                        <p><strong>Sprint Master:</strong></p>
+                        <ul>
+                            <li>Assign tickets to members</li>
+                            <li>Facilitates the Scrum process and ensures adherence to Scrum practices</li>
+                        </ul>
+                    </div>
+		    </div>
+
+        <div class="user-list">
+            <p><strong>{{ user.group_name }} members:</strong></p>
+            <ul>
+                {% for user in same_group_users %}
+                    <li>{{ user.name }} - {{ user.roles }} </li> 
+                
+                    {% empty %}
+                    <li>No other users in this group.</li>
+                {% endfor %}
+            <li>{{ user.name }} - {{ user.roles }} </li> 
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Progress</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <style>
+        .top-right {
+            position: absolute;
+            top: 15px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #930e0e;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        .logout-button { background-color: #df0202; }
+        .logout-button:hover { background-color: #ec3131; }
+        .username { font-weight: bold; }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .task-form { display: inline; }
+        .status-select {
+            margin-right: 10px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .section { margin-bottom: 30px; }
+        .section h3 {
+            background-color: #585858;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .text-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        h4 { color: #000000; }
+
+        .button1 {
+            padding: 6px 10px;
+            background-color: #292929;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button1:hover { background-color: #585858; }
+
+        .done-label {
+            background-color: #2d8a30;
+            color: white;
+            font-size: small;
+            padding: 3px 6px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+
+        /* Messages styling */
+        .messages { margin: 10px 0; }
+        .messages .message {
+            margin: 6px 0; padding: 6px 10px; border-radius: 4px; border: 1px solid transparent;
+        }
+        .messages .message.error   { background:#f8d7da; color:#721c24; border-color:#f5c6cb; }
+        .messages .message.success { background:#d4edda; color:#155724; border-color:#c3e6cb; }
+        .messages .message.warning { background:#fff3cd; color:#856404; border-color:#ffeeba; }
+        .messages .message.info    { background:#e2e3e5; color:#383d41; border-color:#d6d8db; }
+
+        .description { font-size: 0.9em; color: #333; margin: 4px 0; }
+        .muted       { font-size: 0.9em; color: #666; margin: 4px 0; }
+    </style>
+
+    <script>
+        function validateForm(event) {
+            const input = event.target.querySelector('.risk-management-input');
+            if (input.value.trim() === '') {
+                alert('You should write at least one risk!');
+                input.focus();
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+        function validateForm1(event) {
+            const input = event.target.querySelector('.challenges-input');
+            if (input.value.trim() === '') {
+                alert('You should write at least one challenge you faced!');
+                input.focus();
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+        function validateForm2(event) {
+            const input = event.target.querySelector('.lesson-learned-input');
+            if (input.value.trim() === '') {
+                alert('You should write at least one lesson that you learned!');
+                input.focus();
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <div class="container">
+        <!-- Show Django messages on THIS page -->
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}
+              <p class="message {{ message.tags }}">{{ message }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <h2>My Progress</h2>
+
+        <div class="section">
+            <h3>To Do</h3>
+            <ul>
+                {% for task in tasks_to_do %}
+                    <li class="task-item">
+                        <div>
+                            <h4>{{ task.title }}</h4>
+                            <p>{{ task.description }}</p>
+
+                            {% if task.depends_on %}
+                            <p class="description">
+                                <strong>Depends on:</strong> {{ task.depends_on.title }}
+                                ({{ task.depends_on.get_status_display }})
+                              </p>    
+                            {% endif %}
+
+                            <form method="post" class="task-form" onsubmit="validateForm(event);">
+                                {% csrf_token %}
+                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                <input type="hidden" name="action" value="to_do_to_doing">
+                                {{ forms_risk_management.task.id.risk_management }}
+                                <input type="text" name="risk_management" class="risk-management-input text-input"
+                                       placeholder="Identify one/two Risks. i.e. I need to spend too much time to learn the technology" style="width: 600px; height: 6px;">
+                                <button type="submit" class="button1">Start Doing</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>Doing</h3>
+            <ul>
+                {% for task in tasks_doing %}
+                <li class="task-item">
+                    <div>
+                        <h4>{{ task.title }}</h4>
+                        <p>{{ task.description }}</p>
+        
+                        {% if task.depends_on %}
+                          <p class="description">
+                            <strong>Depends on:</strong> {{ task.depends_on.title }}
+                            ({{ task.depends_on.get_status_display }})
+                          </p>
+                        {% endif %}
+        
+                        <form method="post" class="task-form" onsubmit="validateForm1(event);">
+                            {% csrf_token %}
+                            <input type="hidden" name="task_id" value="{{ task.id }}">
+                            <input type="hidden" name="action" value="doing_to_done">
+                            <input type="text" name="challenges" class="challenges-input text-input"
+                                   placeholder="Identify challenges you faced..."
+                                   style="width: 600px; height: 6px;">
+        
+                            <button type="submit" class="button1">Mark as Done</button>
+                        </form>
+        
+                        {% if task.depends_on and task.depends_on.status != 'done' %}
+                          <!-- Inline warning shown under the form -->
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h3>Done</h3>
+            <ul>
+                {% for task in tasks_done %}
+                    <li class="task-item">
+                        <div>
+                            <h4>{{ task.title }}</h4>
+                            <p>{{ task.description }}</p>
+
+                            <form method="post" class="task-form" onsubmit="validateForm2(event);">
+                                {% csrf_token %}
+                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                <input type="hidden" name="action" value="update_lesson_learned">
+                                {{ forms_lesson_learned.task.id.lesson_learned }}
+                                <input type="text" name="lesson_learned" class="lesson-learned-input text-input"
+                                       placeholder="What did you Learn from the ticket? i.e. I learned how to connect two different classes."
+                                       style="width: 600px; height: 6px;">
+                                <button type="submit" class="button1">Submit</button>
+                            </form>
+                        </div>
+                        {% if task.lesson_learned %}
+                          <span class="done-label">Done</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

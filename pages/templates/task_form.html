@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Form</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <style>
+        .top-right {
+            position: absolute;
+            top: 15px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+            position: absolute;
+            background: #fff;
+            padding: 30px;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* vertical + horizontal centering */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #930e0e;
+            margin: 0;
+            padding: 0;
+        }
+        .button1 {
+            padding: 10px 10px;
+            background-color: #292929;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        #id_title {
+            margin-bottom: 30px;  /* adds space after Title field */
+            margin-top: 10px;  /* adjust as needed */
+
+        }
+        
+        #id_description {
+            margin-top: 10px;  /* adjust as needed */
+            width: 650px;   /* adjust width */
+            height: 100px;  /* adjust height */
+            display: block;  
+            margin-left: auto;
+            margin-right: auto; 
+        }   
+             
+        label[for="id_description"],
+        label[for="id_sprint"],
+        label[for="id_depends_on"] {
+            font-weight: bold;
+        }
+     
+        .button1:hover {
+            background-color: #585858;
+        }
+        .logout-button {
+            background-color: #df0202;
+        }
+        .logout-button:hover {
+            background-color: #ec3131;
+        }
+        .username {
+            font-weight: bold;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        /* 🔹 Added spacing styles */
+        h2 {
+            margin-bottom: 60px; 
+        }
+        form p {
+            margin-bottom: 10px; 
+        }
+        
+    </style>
+
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container">
+        <h2>TICKET DETAILS</h2>
+
+        <!-- Auto title preview -->
+        <div class="preview-box">
+            <span class="preview-label"><b>Title:</b></span>
+            <span id="titlePreview" class="preview-value">—</span>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="button1">Save</button>
+        </form>
+    </div>
+
+    <script>
+      (function() {
+        // Map of next ticket numbers by sprint, passed from the view
+        const nextCounts = JSON.parse('{{ next_counts_json|escapejs }}'); // {S1: 5, S2: 3, ...}
+        const selectSprint = document.getElementById('id_sprint');
+        const preview = document.getElementById('titlePreview');
+
+        function sprintNumber(code) {
+          // 'S1' -> '1'
+          return (code || '').replace('S','');
+        }
+
+        function updatePreview() {
+          const code = selectSprint ? selectSprint.value : 'S1';
+          const num = sprintNumber(code) || '?';
+          const next = nextCounts[code] || '?';
+          preview.textContent = `Fall25_S${num}_Ticket ${next}`;
+        }
+
+        if (selectSprint) {
+          updatePreview();
+          selectSprint.addEventListener('change', updatePreview);
+        } else {
+          preview.textContent = 'Fall25_S?_Ticket ?';
+        }
+      })();
+    </script>
+</body>
+</html>
