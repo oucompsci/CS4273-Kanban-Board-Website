@@ -13,14 +13,19 @@ from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-!8_3q@fn32)d&ua!^+#r54myxn_pma6y@^$6n-d)a!u!k@0k99"
+#SECRET_KEY = "django-insecure-!8_3q@fn32)d&ua!^+#r54myxn_pma6y@^$6n-d)a!u!k@0k99"
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY environment variable is not set")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -138,9 +143,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media') #This is for the real server
 
 CSRF_TRUSTED_ORIGINS = [ 'https://roundtrip.cs.nor.ou.edu', 'https://cs.ou.edu','https://cscapstone.cs.ou.edu' ]
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
