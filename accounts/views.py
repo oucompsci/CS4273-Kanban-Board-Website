@@ -8,7 +8,7 @@ def register_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             code = form.cleaned_data.get('code')
-            if code == "CS4273Fall25":
+            if code == "CS4273Spring26":
                 user = form.save()
                 login(request, user)
                 return redirect('account_details')  # Redirect to account details after registration
