@@ -10,7 +10,8 @@ class MentorRedirectMiddleware:
             "GroupEMentor", "GroupFMentor", "GroupGMentor", "GroupHMentor",
             "GroupIMentor", "GroupJMentor", "GroupKMentor", "GroupLMentor", 
             "GroupMMentor", "GroupNMentor", "GroupOMentor", "GroupPMentor", 
-            "GroupQMentor", "GroupRMentor", "GroupSMentor"
+            "GroupQMentor", "GroupRMentor", "GroupSMentor", "GroupTMentor",
+            "GroupUMentor","GroupVMentor","GroupWMentor","GroupXMentor",
             
         ]
 
