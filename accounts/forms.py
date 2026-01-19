@@ -9,7 +9,6 @@ ROLE_CHOICES = [
     ('SM2', 'Sprint Master 2'),
     ('SM3', 'Sprint Master 3'),
     ('SM4', 'Sprint Master 4'),
-    ('Mentor/Client', 'Mentor/Client'),
 ]
 
 GROUP_CHOICES = [
