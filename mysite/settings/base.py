@@ -107,7 +107,8 @@ EMAIL_PORT = 587               # Use port 587 for TLS (secure connection)
 EMAIL_USE_TLS = True           # Enable TLS (Transport Layer Security)
 EMAIL_HOST_USER = 'kanbanboardcs4273@gmail.com'  # Your email address
 EMAIL_HOST_PASSWORD = 'fxou sght czqv jfpr'  # App password (explained below)
-DEFAULT_FROM_EMAIL = 'webmaster@roundtrip.cs.nor.ou.edu'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+#DEFAULT_FROM_EMAIL = 'webmaster@roundtrip.cs.nor.ou.edu'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
