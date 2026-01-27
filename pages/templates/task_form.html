@@ -126,14 +126,14 @@
           const code = selectSprint ? selectSprint.value : 'S1';
           const num = sprintNumber(code) || '?';
           const next = nextCounts[code] || '?';
-          preview.textContent = `Fall25_S${num}_Ticket ${next}`;
+          preview.textContent = `Spring26_S${num}_Ticket ${next}`;
         }
 
         if (selectSprint) {
           updatePreview();
           selectSprint.addEventListener('change', updatePreview);
         } else {
-          preview.textContent = 'Fall25_S?_Ticket ?';
+          preview.textContent = 'Spring26_S?_Ticket ?';
         }
       })();
     </script>
