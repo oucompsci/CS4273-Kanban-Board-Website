@@ -34,6 +34,7 @@ GROUP_CHOICES = [
     ('Group T', 'Group T'),
     ('Group U', 'Group U'),
     ('Group V', 'Group V'),
+    ('Test', 'Test'),
     ]
 
 SEMESTER_CHOICES = [
