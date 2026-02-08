@@ -98,7 +98,7 @@ def task_create(request):
                 next_num = next_num_for(sprint_code)                 # e.g. 7
 
                 # Compose the title
-                task.title = f"Fall25_S{sprint_num}_Ticket {next_num}"
+                task.title = f"CS4273_S{sprint_num}_Ticket {next_num}"
 
                 task.save()
             messages.success(request, f'Ticket "{task.title}" created.')
