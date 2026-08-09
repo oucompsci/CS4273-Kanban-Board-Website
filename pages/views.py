@@ -44,37 +44,161 @@ def account_details(request):
     return render(request, 'account_details.html', {'form': form, 'same_group_users': same_group_users})
 
 
-
 @login_required
 def task_list(request):
-    # Get the group of the logged-in user
+    # Logged-in user's group
     user_group = request.user.group_name
 
-    # Fetch tasks for all members of the same group and sort by sprint
-    tasks = Task.objects.filter(user__group_name=user_group).order_by('sprint')
+    # All tasks belonging to members of this group
+    tasks = (
+        Task.objects
+        .filter(user__group_name=user_group)
+        .order_by('sprint', 'id')
+    )
 
-    # Fetch all group members for the dropdown
-    group_members = CustomUser.objects.filter(group_name=user_group)
+    # Members available in assignment dropdowns
+    group_members = CustomUser.objects.filter(
+        group_name=user_group
+    )
+
+    # Scrum Master -> sprint permission
+    role_to_sprint = {
+        'SM1': 'S1',
+        'SM2': 'S2',
+        'SM3': 'S3',
+        'SM4': 'S4',
+    }
+
+    allowed_sprint = role_to_sprint.get(request.user.roles)
 
     if request.method == 'POST':
-        task_id = request.POST.get('task_id')
-        task = get_object_or_404(Task, id=task_id)
 
-        # Update task status and sprint
-        task.status = request.POST.get('status')
+        # Which sprint's Update All button was clicked?
+        submitted_sprint = request.POST.get('sprint')
 
-        # Update assigned user if provided
-        assign_user_id = request.POST.get('assign_user')
-        if assign_user_id:
-            assigned_user = get_object_or_404(CustomUser, id=assign_user_id)
-            task.user = assigned_user
+        # Security: user must be the Scrum Master for that sprint
+        if not allowed_sprint or submitted_sprint != allowed_sprint:
+            messages.error(
+                request,
+                'You do not have permission to update this sprint.'
+            )
+            return redirect('task_list')
 
-        # Save task and refresh page
-        task.save()
+        # Only update tasks from:
+        # 1. this user's group
+        # 2. the submitted sprint
+        sprint_tasks = tasks.filter(
+            sprint=submitted_sprint
+        )
+
+        updated_count = 0
+
+        try:
+            with transaction.atomic():
+
+                for task in sprint_tasks:
+
+                    status = request.POST.get(
+                        f'status_{task.id}'
+                    )
+
+                    assign_user_id = request.POST.get(
+                        f'assign_user_{task.id}'
+                    )
+
+                    changed = False
+
+
+                    # =========================================
+                    # STATUS
+                    # =========================================
+
+                    # Status dropdown is only submitted for
+                    # To Do / Cancel tasks.
+                    if status is not None:
+
+                        if status not in ['to_do', 'cancel']:
+                            raise ValidationError(
+                                f'Invalid status for "{task.title}".'
+                            )
+
+                        if task.status != status:
+                            task.status = status
+                            changed = True
+
+
+                    # =========================================
+                    # ASSIGNED USER
+                    # =========================================
+
+                    if assign_user_id:
+
+                        assigned_user = group_members.filter(
+                            id=assign_user_id
+                        ).first()
+
+                        if not assigned_user:
+                            raise ValidationError(
+                                f'Invalid assigned user for "{task.title}".'
+                            )
+
+                        if task.user_id != assigned_user.id:
+                            task.user = assigned_user
+                            changed = True
+
+
+                    # =========================================
+                    # SAVE
+                    # =========================================
+
+                    if changed:
+                        task.save()
+                        updated_count += 1
+
+
+            if updated_count > 0:
+
+                messages.success(
+                    request,
+                    f'{updated_count} ticket(s) updated successfully '
+                    f'for {submitted_sprint}.'
+                )
+
+            else:
+
+                messages.info(
+                    request,
+                    f'No changes detected for {submitted_sprint}.'
+                )
+
+
+        except ValidationError as e:
+
+            if hasattr(e, 'message_dict'):
+                error_message = '; '.join(
+                    sum(e.message_dict.values(), [])
+                )
+            else:
+                error_message = '; '.join(e.messages)
+
+            messages.error(
+                request,
+                error_message
+            )
+
+
         return redirect('task_list')
 
-    # Render template with tasks and group members
-    return render(request, 'task_list.html', {'tasks': tasks, 'group_members': group_members})
+
+    return render(
+        request,
+        'task_list.html',
+        {
+            'tasks': tasks,
+            'group_members': group_members,
+        }
+    )
+
 
 @login_required
 def task_create(request):
@@ -150,83 +274,264 @@ def my_progress(request):
         task_id = request.POST.get('task_id')
         action = request.POST.get('action')
 
-        # Only allow the signed-in user to operate on their own task
+        # A user may only modify their own tickets.
         task = get_object_or_404(Task, id=task_id, user=request.user)
 
-        # to_do -> doing
+        # ---------------------------------------------------------
+        # Move To Do -> Doing and save initial Risk Management
+        # ---------------------------------------------------------
         if action == 'to_do_to_doing':
-            risk_management = request.POST.get('risk_management')
+            risk_management = request.POST.get('risk_management', '').strip()
+
+            if not risk_management:
+                messages.error(request, 'You should write at least one risk.')
+                return redirect('my_progress')
+
             task.risk_management = risk_management
             task.status = 'doing'
+
             try:
                 task.save()
-                messages.success(request, f'"{task.title}" moved to Doing.')
+                messages.success(
+                    request,
+                    f'"{task.title}" moved to Doing.'
+                )
             except ValidationError as e:
-                messages.error(request, '; '.join(sum(e.message_dict.values(), [])))
+                messages.error(
+                    request,
+                    '; '.join(sum(e.message_dict.values(), []))
+                )
+
             return redirect('my_progress')
 
-        # doing -> done (BLOCK if dependency not done)
+        # ---------------------------------------------------------
+        # Edit existing Risk Management
+        # ---------------------------------------------------------
+        elif action == 'update_risk_management':
+            if task.status not in ['doing', 'done']:
+                messages.error(
+                    request,
+                    'Risk Management can only be edited after the ticket has started.'
+                )
+                return redirect('my_progress')
+
+            risk_management = request.POST.get('risk_management', '').strip()
+
+            if not risk_management:
+                messages.error(
+                    request,
+                    'Risk Management cannot be empty.'
+                )
+                return redirect('my_progress')
+
+            task.risk_management = risk_management
+
+            try:
+                task.save()
+                messages.success(
+                    request,
+                    f'Risk Management updated for "{task.title}".'
+                )
+            except ValidationError as e:
+                messages.error(
+                    request,
+                    '; '.join(sum(e.message_dict.values(), []))
+                )
+
+            return redirect('my_progress')
+
+        # ---------------------------------------------------------
+        # Move Doing -> Done and save initial Challenges
+        # ---------------------------------------------------------
         elif action == 'doing_to_done':
+
+            # Prevent completion if dependency is unfinished
             if task.depends_on and task.depends_on.status != 'done':
                 messages.error(
                     request,
                     f'Cannot mark "{task.title}" as Done because it depends on '
-                    f'"{task.depends_on.title}" which is {task.depends_on.get_status_display()}.'
+                    f'"{task.depends_on.title}" which is '
+                    f'{task.depends_on.get_status_display()}.'
                 )
                 return redirect('my_progress')
 
-            challenges = request.POST.get('challenges')
-            task.challenges = challenges
-            task.status = 'done'
-            try:
-                task.save()  # if you also add model-level validation, this will raise ValidationError
-                messages.success(request, f'"{task.title}" marked as Done.')
-            except ValidationError as e:
-                messages.error(request, '; '.join(sum(e.message_dict.values(), [])))
-            return redirect('my_progress')
+            # Get both fields from the same form
+            risk_management = request.POST.get(
+                'risk_management', ''
+            ).strip()
 
-        # update lesson learned
-        elif action == 'update_lesson_learned':
-            lesson_learned = request.POST.get('lesson_learned')
-            task.lesson_learned = lesson_learned
+            challenges = request.POST.get(
+                'challenges', ''
+            ).strip()
+
+            # Validate Risk Management
+            if not risk_management:
+                messages.error(
+                    request,
+                    'Risk Management cannot be empty.'
+                )
+                return redirect('my_progress')
+
+            # Validate Challenges
+            if not challenges:
+                messages.error(
+                    request,
+                    'You should write at least one challenge you faced.'
+                )
+                return redirect('my_progress')
+
+            # Save both comments
+            task.risk_management = risk_management
+            task.challenges = challenges
+
+            # Move task to Done
+            task.status = 'done'
+
             try:
                 task.save()
-                messages.success(request, f'Lesson learned updated for "{task.title}".')
+
+                messages.success(
+                    request,
+                    f'"{task.title}" marked as Done.'
+                )
+
             except ValidationError as e:
-                messages.error(request, '; '.join(sum(e.message_dict.values(), [])))
+                messages.error(
+                    request,
+                    '; '.join(sum(e.message_dict.values(), []))
+                )
+
+            return redirect('my_progress')
+        # ---------------------------------------------------------
+        # Edit existing Challenges
+        # ---------------------------------------------------------
+        elif action == 'update_challenges':
+            if task.status != 'done':
+                messages.error(
+                    request,
+                    'Challenges can only be edited after the ticket is Done.'
+                )
+                return redirect('my_progress')
+
+            challenges = request.POST.get('challenges', '').strip()
+
+            if not challenges:
+                messages.error(
+                    request,
+                    'Challenges cannot be empty.'
+                )
+                return redirect('my_progress')
+
+            task.challenges = challenges
+
+            try:
+                task.save()
+                messages.success(
+                    request,
+                    f'Challenges updated for "{task.title}".'
+                )
+            except ValidationError as e:
+                messages.error(
+                    request,
+                    '; '.join(sum(e.message_dict.values(), []))
+                )
+
             return redirect('my_progress')
 
-        # fallback: status form (currently unused in this template flow)
-        else:
-            form = UpdateStatusForm(request.POST, instance=task)
-            if form.is_valid():
-                try:
-                    form.save()
-                    messages.success(request, f'Status updated for "{task.title}".')
-                except ValidationError as e:
-                    messages.error(request, '; '.join(sum(e.message_dict.values(), [])))
+        # ---------------------------------------------------------
+        # Add or edit Lesson Learned
+        # ---------------------------------------------------------
+        elif action == 'update_lesson_learned':
+
+            if task.status != 'done':
+                messages.error(
+                    request,
+                    'Progress comments can only be edited after the ticket is Done.'
+                )
+                return redirect('my_progress')
+
+            # Get all three fields from the same form
+            risk_management = request.POST.get(
+                'risk_management', ''
+            ).strip()
+
+            challenges = request.POST.get(
+                'challenges', ''
+            ).strip()
+
+            lesson_learned = request.POST.get(
+                'lesson_learned', ''
+            ).strip()
+
+            # Validate Risk Management
+            if not risk_management:
+                messages.error(
+                    request,
+                    'Risk Management cannot be empty.'
+                )
+                return redirect('my_progress')
+
+            # Validate Challenges
+            if not challenges:
+                messages.error(
+                    request,
+                    'Challenges cannot be empty.'
+                )
+                return redirect('my_progress')
+
+            # Validate Lesson Learned
+            if not lesson_learned:
+                messages.error(
+                    request,
+                    'Lesson Learned cannot be empty.'
+                )
+                return redirect('my_progress')
+
+            # Save all three fields together
+            task.risk_management = risk_management
+            task.challenges = challenges
+            task.lesson_learned = lesson_learned
+
+            try:
+                task.save()
+
+                messages.success(
+                    request,
+                    f'Progress comments updated for "{task.title}".'
+                )
+
+            except ValidationError as e:
+                messages.error(
+                    request,
+                    '; '.join(sum(e.message_dict.values(), []))
+                )
+
             return redirect('my_progress')
+    # -------------------------------------------------------------
+    # GET request
+    # -------------------------------------------------------------
+    tasks_to_do = (
+        Task.objects
+        .filter(user=request.user, status='to_do')
+        .select_related('depends_on')
+    )
 
-    # GET: show lists (optimize with select_related for dependency)
-    tasks_to_do = Task.objects.filter(user=request.user, status='to_do').select_related('depends_on')
-    tasks_doing = Task.objects.filter(user=request.user, status='doing').select_related('depends_on')
-    tasks_done  = Task.objects.filter(user=request.user, status='done').select_related('depends_on')
+    tasks_doing = (
+        Task.objects
+        .filter(user=request.user, status='doing')
+        .select_related('depends_on')
+    )
 
-    forms_doing = {t.id: UpdateStatusForm(instance=t) for t in tasks_doing}
-    forms_done = {t.id: UpdateStatusForm(instance=t) for t in tasks_done}
-    forms_risk_management = {t.id: UpdateRiskManagementForm(instance=t) for t in tasks_to_do}
-    forms_challenges = {t.id: UpdateChallengesForm(instance=t) for t in tasks_doing}
-    forms_lesson_learned = {t.id: UpdateLessonLearnedForm(instance=t) for t in tasks_done}
+    tasks_done = (
+        Task.objects
+        .filter(user=request.user, status='done')
+        .select_related('depends_on')
+    )
 
     return render(request, 'my_progress.html', {
         'tasks_to_do': tasks_to_do,
         'tasks_doing': tasks_doing,
         'tasks_done': tasks_done,
-        'forms_doing': forms_doing,
-        'forms_done': forms_done,
-        'forms_risk_management': forms_risk_management,
-        'forms_challenges': forms_challenges,
-        'forms_lesson_learned': forms_lesson_learned,
     })
 
 @login_required

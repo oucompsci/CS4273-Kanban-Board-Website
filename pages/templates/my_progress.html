@@ -4,6 +4,7 @@
     <title>My Progress</title>
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+
     <style>
         .top-right {
             position: absolute;
@@ -13,6 +14,7 @@
             align-items: center;
             gap: 10px;
         }
+
         body {
             font-family: Arial, sans-serif;
             background-color: #930e0e;
@@ -20,24 +22,97 @@
             padding: 0;
         }
 
+        .logout-button {
+            background-color: #df0202;
+        }
 
-        .logout-button { background-color: #df0202; }
-        .logout-button:hover { background-color: #ec3131; }
-        .username { font-weight: bold; }
+        .logout-button:hover {
+            background-color: #ec3131;
+        }
+
+        .username {
+            font-weight: bold;
+        }
 
         .task-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
+
+            background-color: #f2f2f2;
+            border: 1px solid #d6d6d6;
+            border-radius: 8px;
+
+            padding: 18px 20px;
             margin-bottom: 15px;
+
+            box-sizing: border-box;
         }
-        .task-form { display: inline; }
+        /* Do not show a separator after the last task */
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .task-form {
+            display: inline;
+        }
+
+        /*
+         * Forms used for editing progress fields.
+         */
+        .progress-edit-form {
+            display: block;
+        }
+
+        /*
+         * Consistent layout for:
+         * Risk Management
+         * Challenges
+         * Lesson Learned
+         */
+        .field-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        /*
+         * Give every label the same width so all textboxes line up.
+         */
+        .field-label {
+            min-width: 140px;
+            margin: 0;
+        }
+        .section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-item > div {
+            width: 100%;
+        }
+        /*
+         * Textboxes inside progress rows.
+         */
+        .field-row .text-input {
+            width: 600px;
+            max-width: 100%;
+            margin-bottom: 0;
+            box-sizing: border-box;
+        }
+
         .status-select {
             margin-right: 10px;
             padding: 5px;
             border-radius: 4px;
         }
-        .section { margin-bottom: 30px; }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
         .section h3 {
             background-color: #585858;
             color: white;
@@ -45,6 +120,7 @@
             border-radius: 4px;
             border: 1px solid #ddd;
         }
+
         .text-input {
             width: 100%;
             padding: 10px;
@@ -53,7 +129,9 @@
             margin-bottom: 10px;
         }
 
-        h4 { color: #000000; }
+        h4 {
+            color: #000000;
+        }
 
         .button1 {
             padding: 6px 10px;
@@ -65,7 +143,10 @@
             text-decoration: none;
             display: inline-block;
         }
-        .button1:hover { background-color: #585858; }
+
+        .button1:hover {
+            background-color: #585858;
+        }
 
         .done-label {
             background-color: #2d8a30;
@@ -77,161 +158,629 @@
         }
 
         /* Messages styling */
-        .messages { margin: 10px 0; }
-        .messages .message {
-            margin: 6px 0; padding: 6px 10px; border-radius: 4px; border: 1px solid transparent;
+        .messages {
+            margin: 10px 0;
         }
-        .messages .message.error   { background:#f8d7da; color:#721c24; border-color:#f5c6cb; }
-        .messages .message.success { background:#d4edda; color:#155724; border-color:#c3e6cb; }
-        .messages .message.warning { background:#fff3cd; color:#856404; border-color:#ffeeba; }
-        .messages .message.info    { background:#e2e3e5; color:#383d41; border-color:#d6d8db; }
 
-        .description { font-size: 0.9em; color: #333; margin: 4px 0; }
-        .muted       { font-size: 0.9em; color: #666; margin: 4px 0; }
+        .messages .message {
+            margin: 6px 0;
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+
+        .messages .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .messages .message.success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .messages .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeeba;
+        }
+
+        .messages .message.info {
+            background: #e2e3e5;
+            color: #383d41;
+            border-color: #d6d8db;
+        }
+
+        .description {
+            font-size: 0.9em;
+            color: #333;
+            margin: 4px 0;
+        }
+
+        .muted {
+            font-size: 0.9em;
+            color: #666;
+            margin: 4px 0;
+        }
     </style>
 
+
     <script>
+
+        /*
+         * Validate a To Do ticket before moving it to Doing.
+         */
         function validateForm(event) {
-            const input = event.target.querySelector('.risk-management-input');
+
+            const input =
+                event.target.querySelector('.risk-management-input');
+
             if (input.value.trim() === '') {
+
                 alert('You should write at least one risk!');
+
                 input.focus();
                 event.preventDefault();
+
                 return false;
             }
+
             return true;
         }
-        function validateForm1(event) {
-            const input = event.target.querySelector('.challenges-input');
-            if (input.value.trim() === '') {
+
+
+        /*
+         * Validate a Doing ticket before moving it to Done.
+         *
+         * The same submission will:
+         * 1. Save the updated Risk Management
+         * 2. Save Challenges
+         * 3. Move the ticket to Done
+         */
+        function validateDoingForm(event) {
+
+            const riskInput =
+                event.target.querySelector('.risk-management-input');
+
+            const challengesInput =
+                event.target.querySelector('.challenges-input');
+
+
+            if (riskInput.value.trim() === '') {
+
+                alert('You should write at least one risk!');
+
+                riskInput.focus();
+                event.preventDefault();
+
+                return false;
+            }
+
+
+            if (challengesInput.value.trim() === '') {
+
                 alert('You should write at least one challenge you faced!');
-                input.focus();
+
+                challengesInput.focus();
                 event.preventDefault();
+
                 return false;
             }
+
+
             return true;
         }
-        function validateForm2(event) {
-            const input = event.target.querySelector('.lesson-learned-input');
-            if (input.value.trim() === '') {
+
+
+        /*
+         * Validate all three Done-ticket progress fields.
+         *
+         * One submission will save:
+         * 1. Risk Management
+         * 2. Challenges
+         * 3. Lesson Learned
+         */
+        function validateDoneForm(event) {
+
+            const riskInput =
+                event.target.querySelector('.risk-management-input');
+
+            const challengesInput =
+                event.target.querySelector('.challenges-input');
+
+            const lessonInput =
+                event.target.querySelector('.lesson-learned-input');
+
+
+            if (riskInput.value.trim() === '') {
+
+                alert('You should write at least one risk!');
+
+                riskInput.focus();
+                event.preventDefault();
+
+                return false;
+            }
+
+
+            if (challengesInput.value.trim() === '') {
+
+                alert('You should write at least one challenge you faced!');
+
+                challengesInput.focus();
+                event.preventDefault();
+
+                return false;
+            }
+
+
+            if (lessonInput.value.trim() === '') {
+
                 alert('You should write at least one lesson that you learned!');
-                input.focus();
+
+                lessonInput.focus();
                 event.preventDefault();
+
                 return false;
             }
+
+
             return true;
         }
+
     </script>
+
 </head>
+
+
 <body>
+
     {% include 'header.html' %}
 
+
     <div class="container">
-        <!-- Show Django messages on THIS page -->
+
+        <!-- Show Django messages -->
         {% if messages %}
-          <div class="messages">
-            {% for message in messages %}
-              <p class="message {{ message.tags }}">{{ message }}</p>
-            {% endfor %}
-          </div>
+
+            <div class="messages">
+
+                {% for message in messages %}
+
+                    <p class="message {{ message.tags }}">
+                        {{ message }}
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
         {% endif %}
+
 
         <h2>My Progress</h2>
 
+
+
+        <!-- ===================================================== -->
+        <!-- TO DO -->
+        <!-- ===================================================== -->
+
         <div class="section">
+
             <h3>To Do</h3>
+
             <ul>
+
                 {% for task in tasks_to_do %}
+
                     <li class="task-item">
+
                         <div>
+
                             <h4>{{ task.title }}</h4>
+
                             <p>{{ task.description }}</p>
+
 
                             {% if task.depends_on %}
-                            <p class="description">
-                                <strong>Depends on:</strong> {{ task.depends_on.title }}
-                                ({{ task.depends_on.get_status_display }})
-                              </p>    
+
+                                <p class="description">
+
+                                    <strong>Depends on:</strong>
+
+                                    {{ task.depends_on.title }}
+
+                                    ({{ task.depends_on.get_status_display }})
+
+                                </p>
+
                             {% endif %}
 
-                            <form method="post" class="task-form" onsubmit="validateForm(event);">
+
+                            <form
+                                method="post"
+                                class="task-form"
+                                onsubmit="validateForm(event);"
+                            >
+
                                 {% csrf_token %}
-                                <input type="hidden" name="task_id" value="{{ task.id }}">
-                                <input type="hidden" name="action" value="to_do_to_doing">
+
+
+                                <input
+                                    type="hidden"
+                                    name="task_id"
+                                    value="{{ task.id }}"
+                                >
+
+
+                                <input
+                                    type="hidden"
+                                    name="action"
+                                    value="to_do_to_doing"
+                                >
+
+
                                 {{ forms_risk_management.task.id.risk_management }}
-                                <input type="text" name="risk_management" class="risk-management-input text-input"
-                                       placeholder="Identify one/two Risks. i.e. I need to spend too much time to learn the technology" style="width: 600px; height: 6px;">
-                                <button type="submit" class="button1">Start Doing</button>
+
+
+                                <input
+                                    type="text"
+                                    name="risk_management"
+                                    class="risk-management-input text-input"
+                                    placeholder="Identify one/two Risks. i.e. I need to spend too much time to learn the technology"
+                                    style="width: 600px; height: 6px;"
+                                    required
+                                >
+
+
+                                <button
+                                    type="submit"
+                                    class="button1"
+                                >
+                                    Start Doing
+                                </button>
+
                             </form>
+
                         </div>
+
                     </li>
+
                 {% endfor %}
+
             </ul>
+
         </div>
 
+
+
+        <!-- ===================================================== -->
+        <!-- DOING -->
+        <!-- ===================================================== -->
+
         <div class="section">
+
             <h3>Doing</h3>
+
             <ul>
+
                 {% for task in tasks_doing %}
-                <li class="task-item">
-                    <div>
-                        <h4>{{ task.title }}</h4>
-                        <p>{{ task.description }}</p>
-        
-                        {% if task.depends_on %}
-                          <p class="description">
-                            <strong>Depends on:</strong> {{ task.depends_on.title }}
-                            ({{ task.depends_on.get_status_display }})
-                          </p>
-                        {% endif %}
-        
-                        <form method="post" class="task-form" onsubmit="validateForm1(event);">
-                            {% csrf_token %}
-                            <input type="hidden" name="task_id" value="{{ task.id }}">
-                            <input type="hidden" name="action" value="doing_to_done">
-                            <input type="text" name="challenges" class="challenges-input text-input"
-                                   placeholder="Identify challenges you faced..."
-                                   style="width: 600px; height: 6px;">
-        
-                            <button type="submit" class="button1">Mark as Done</button>
-                        </form>
-        
-                        {% if task.depends_on and task.depends_on.status != 'done' %}
-                          <!-- Inline warning shown under the form -->
-                        {% endif %}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        
-        <div class="section">
-            <h3>Done</h3>
-            <ul>
-                {% for task in tasks_done %}
+
                     <li class="task-item">
+
                         <div>
+
                             <h4>{{ task.title }}</h4>
+
                             <p>{{ task.description }}</p>
 
-                            <form method="post" class="task-form" onsubmit="validateForm2(event);">
+
+                            {% if task.depends_on %}
+
+                                <p class="description">
+
+                                    <strong>Depends on:</strong>
+
+                                    {{ task.depends_on.title }}
+
+                                    ({{ task.depends_on.get_status_display }})
+
+                                </p>
+
+                            {% endif %}
+
+
+
+                            <!--
+                                One form:
+                                1. Updates Risk Management
+                                2. Saves Challenges
+                                3. Marks ticket as Done
+                            -->
+
+                            <form
+                                method="post"
+                                class="task-form progress-edit-form"
+                                onsubmit="validateDoingForm(event);"
+                            >
+
                                 {% csrf_token %}
-                                <input type="hidden" name="task_id" value="{{ task.id }}">
-                                <input type="hidden" name="action" value="update_lesson_learned">
-                                {{ forms_lesson_learned.task.id.lesson_learned }}
-                                <input type="text" name="lesson_learned" class="lesson-learned-input text-input"
-                                       placeholder="What did you Learn from the ticket? i.e. I learned how to connect two different classes."
-                                       style="width: 600px; height: 6px;">
-                                <button type="submit" class="button1">Submit</button>
+
+
+                                <input
+                                    type="hidden"
+                                    name="task_id"
+                                    value="{{ task.id }}"
+                                >
+
+
+                                <input
+                                    type="hidden"
+                                    name="action"
+                                    value="doing_to_done"
+                                >
+
+
+
+                                <!-- Risk Management -->
+
+                                <div class="field-row">
+
+                                    <label class="field-label">
+                                        <strong>Risk Management:</strong>
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+                                        name="risk_management"
+                                        class="risk-management-input text-input"
+                                        value="{{ task.risk_management|default_if_none:'' }}"
+                                        required
+                                    >
+
+                                </div>
+
+
+
+                                <!-- Challenges -->
+
+                                <div class="field-row">
+
+                                    <label class="field-label">
+                                        <strong>Challenges:</strong>
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+                                        name="challenges"
+                                        class="challenges-input text-input"
+                                        placeholder="Identify challenges you faced..."
+                                        required
+                                    >
+
+
+                                    <button
+                                        type="submit"
+                                        class="button1"
+                                    >
+                                        Mark as Done
+                                    </button>
+
+                                </div>
+
                             </form>
+
+
+                            {% if task.depends_on and task.depends_on.status != 'done' %}
+
+                                <!-- dependency warning if needed -->
+
+                            {% endif %}
+
                         </div>
-                        {% if task.lesson_learned %}
-                          <span class="done-label">Done</span>
-                        {% endif %}
+
                     </li>
+
+
+                {% empty %}
+
+                    <li>
+                        No tickets currently in progress.
+                    </li>
+
                 {% endfor %}
+
             </ul>
+
         </div>
+
+
+
+        <!-- ===================================================== -->
+        <!-- DONE -->
+        <!-- ===================================================== -->
+
+        <div class="section">
+
+            <h3>Done</h3>
+
+            <ul>
+
+                {% for task in tasks_done %}
+
+                    <li class="task-item">
+
+                        <div>
+
+                            <h4>{{ task.title }}</h4>
+
+                            <p>{{ task.description }}</p>
+
+
+                            {% if task.depends_on %}
+
+                                <p class="description">
+
+                                    <strong>Depends on:</strong>
+
+                                    {{ task.depends_on.title }}
+
+                                    ({{ task.depends_on.get_status_display }})
+
+                                </p>
+
+                            {% endif %}
+
+
+
+                            <!--
+                                One form for the entire Done ticket.
+
+                                Clicking the button will:
+                                1. Save Risk Management
+                                2. Save Challenges
+                                3. Save Lesson Learned
+                            -->
+
+                            <form
+                                method="post"
+                                class="task-form progress-edit-form"
+                                onsubmit="validateDoneForm(event);"
+                            >
+
+                                {% csrf_token %}
+
+
+                                <input
+                                    type="hidden"
+                                    name="task_id"
+                                    value="{{ task.id }}"
+                                >
+
+
+                                <input
+                                    type="hidden"
+                                    name="action"
+                                    value="update_lesson_learned"
+                                >
+
+
+
+                                <!-- Risk Management -->
+
+                                <div class="field-row">
+
+                                    <label class="field-label">
+                                        <strong>Risk Management:</strong>
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+                                        name="risk_management"
+                                        class="risk-management-input text-input"
+                                        value="{{ task.risk_management|default_if_none:'' }}"
+                                        required
+                                    >
+
+                                </div>
+
+
+
+                                <!-- Challenges -->
+
+                                <div class="field-row">
+
+                                    <label class="field-label">
+                                        <strong>Challenges:</strong>
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+                                        name="challenges"
+                                        class="challenges-input text-input"
+                                        value="{{ task.challenges|default_if_none:'' }}"
+                                        required
+                                    >
+
+                                </div>
+
+
+
+                                <!-- Lesson Learned -->
+
+                                <div class="field-row">
+
+                                    <label class="field-label">
+                                        <strong>Lesson Learned:</strong>
+                                    </label>
+
+
+                                    <input
+                                        type="text"
+                                        name="lesson_learned"
+                                        class="lesson-learned-input text-input"
+                                        value="{{ task.lesson_learned|default_if_none:'' }}"
+                                        placeholder="What did you learn from the ticket?"
+                                        required
+                                    >
+
+
+                                    <button
+                                        type="submit"
+                                        class="button1"
+                                    >
+
+                                        {% if task.lesson_learned %}
+
+                                            Save Changes
+
+                                        {% else %}
+
+                                            Submit Lesson
+
+                                        {% endif %}
+
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+
+
+
+                        {% if task.lesson_learned %}
+
+                            <span class="done-label">
+                                Done
+                            </span>
+
+                        {% endif %}
+
+                    </li>
+
+
+                {% empty %}
+
+                    <li>
+                        No completed tickets.
+                    </li>
+
+                {% endfor %}
+
+            </ul>
+
+        </div>
+
     </div>
+
 </body>
 </html>
