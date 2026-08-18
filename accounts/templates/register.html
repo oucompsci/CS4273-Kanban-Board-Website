@@ -1,19 +1,396 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Register</title>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CS4273 Kanban Board - Create Account</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #a71920;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            color: #4f5265;
+            padding: 40px 20px;
+        }
+
+        .register-wrapper {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .register-card {
+            width: 100%;
+            background-color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .register-content {
+            padding: 45px 42px 40px;
+        }
+
+        .ou-logo {
+            text-align: center;
+            color: #a71920;
+
+            font-size: 52px;
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: -7px;
+
+            margin-bottom: 26px;
+        }
+
+        .register-title {
+            margin: 0;
+
+            text-align: center;
+            color: #55586b;
+
+            font-size: 24px;
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        .register-subtitle {
+            margin: 8px 0 12px;
+
+            text-align: center;
+            color: #55586b;
+
+            font-size: 19px;
+            font-weight: 400;
+        }
+
+        .account-heading {
+            margin: 0 0 34px;
+
+            text-align: center;
+            color: #8a8c98;
+
+            font-size: 15px;
+            font-weight: 400;
+        }
+
+        .register-form {
+            width: 100%;
+        }
+
+        .form-group {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            color: #55586b;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            height: 52px;
+
+            padding: 0 16px;
+
+            border: 1px solid #dfe1e7;
+            border-radius: 0;
+
+            background-color: #ffffff;
+            color: #444444;
+
+            font-family: inherit;
+            font-size: 16px;
+
+            outline: none;
+
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #a71920;
+            box-shadow: 0 0 0 2px rgba(167, 25, 32, 0.08);
+        }
+
+        .help-text-field {
+            margin-top: 7px;
+
+            color: #8a8c98;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .help-text-field ul {
+            margin: 6px 0 0;
+            padding-left: 20px;
+        }
+
+        .help-text-field li {
+            margin-bottom: 3px;
+        }
+
+        .field-errors {
+            margin-top: 7px;
+
+            color: #a71920;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .field-errors ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .form-errors {
+            margin-bottom: 24px;
+            padding: 12px 14px;
+
+            border: 1px solid #e4b7b9;
+            background-color: #fff5f5;
+            color: #9d151b;
+
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .form-errors ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .register-button {
+            width: 100%;
+            height: 58px;
+
+            margin-top: 8px;
+
+            border: none;
+            border-radius: 3px;
+
+            background-color: #1473e6;
+            color: #ffffff;
+
+            font-family: inherit;
+            font-size: 17px;
+            font-weight: 500;
+
+            cursor: pointer;
+
+            transition:
+                background-color 0.2s ease,
+                transform 0.1s ease;
+        }
+
+        .register-button:hover {
+            background-color: #0d63cc;
+        }
+
+        .register-button:active {
+            transform: translateY(1px);
+        }
+
+        .login-link {
+            margin-top: 26px;
+            text-align: center;
+
+            color: #55586b;
+            font-size: 15px;
+        }
+
+        .login-link a {
+            color: #55586b;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            color: #a71920;
+            text-decoration: underline;
+        }
+
+        .help-text {
+            margin-top: 28px;
+
+            text-align: center;
+            color: #ffffff;
+
+            font-size: 16px;
+            line-height: 1.55;
+        }
+
+        .help-text p {
+            margin: 0;
+        }
+
+        .help-text a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 620px) {
+            body {
+                justify-content: flex-start;
+                padding-top: 30px;
+            }
+
+            .register-content {
+                padding: 38px 24px 32px;
+            }
+
+            .ou-logo {
+                font-size: 46px;
+                margin-bottom: 24px;
+            }
+
+            .register-title {
+                font-size: 20px;
+            }
+
+            .register-subtitle {
+                font-size: 17px;
+            }
+
+            .account-heading {
+                margin-bottom: 28px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <div class="container">
-        <h2>Register</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Register</button>
-        </form>
-        <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+
+    <div class="register-wrapper">
+
+        <div class="register-card">
+
+            <div class="register-content">
+
+                <div class="ou-logo" aria-label="OU">
+                    OU
+                </div>
+
+                <h1 class="register-title">
+                    CS4273: Capstone Designe Project
+                </h1>
+
+                <p class="register-subtitle">
+                    Kanban Board System
+                </p>
+
+                <p class="account-heading">
+                    Create your account
+                </p>
+
+
+                {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+
+                <form method="post" class="register-form">
+
+                    {% csrf_token %}
+
+                    {% for field in form %}
+
+                        <div class="form-group">
+
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                            </label>
+
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="help-text-field">
+                                    {{ field.help_text|safe }}
+                                </div>
+                            {% endif %}
+
+                            {% if field.errors %}
+                                <div class="field-errors">
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+                    {% endfor %}
+
+
+                    <button
+                        type="submit"
+                        class="register-button"
+                    >
+                        Create Account
+                    </button>
+
+                </form>
+
+
+                <div class="login-link">
+                    Already have an account?
+                    <a href="{% url 'login' %}">
+                        Sign In
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="help-text">
+
+            <p>
+                Having trouble with the site? Let us help!
+            </p>
+
+            <a href="mailto:amirhossein.arezoumand@ou.edu">
+                amirhossein.arezoumand@ou.edu
+            </a>
+
+        </div>
+
     </div>
+
 </body>
 </html>
