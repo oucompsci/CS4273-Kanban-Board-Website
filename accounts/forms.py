@@ -27,18 +27,11 @@ GROUP_CHOICES = [
     ('Group M', 'Group M'),
     ('Group N', 'Group N'),
     ('Group O',' Group O'),
-    ('Group P', 'Group P'),
-    ('Group Q', 'Group Q'),
-    ('Group R', 'Group R'),
-    ('Group S', 'Group S'),
-    ('Group T', 'Group T'),
-    ('Group U', 'Group U'),
-    ('Group V', 'Group V'),
     ('Test', 'Test'),
     ]
 
 SEMESTER_CHOICES = [
-    ('Spring 2026', 'Spring 2026'),
+    ('Fall 2026', 'Fall 2026'),
     # Add more semesters as needed
 ]
 
